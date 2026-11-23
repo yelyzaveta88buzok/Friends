@@ -61,7 +61,6 @@ class ChatFragment : Fragment() {
                 AppLocale.t("📷 Фото надіслано в чат!", "📷 Photo sent to chat!", "📷 Zdjęcie wysłane na czat!"),
                 Toast.LENGTH_SHORT
             ).show()
-            simulateFriendReply()
         }
     }
 
@@ -141,7 +140,6 @@ class ChatFragment : Fragment() {
                 sender = "Ty",
                 text = AppLocale.t("✋ Даю п'ять всій нашій компанії! 🤜🤛", "✋ High-five everyone! 🤜🤛", "✋ Piątka dla całej paczki! 🤜🤛")
             )
-            simulateFriendReply()
         }
         binding.chipSticker2.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -149,7 +147,6 @@ class ChatFragment : Fragment() {
                 sender = "Ty",
                 text = AppLocale.t("☕ Хто сьогодні йде на каву?", "☕ Who's grabbing coffee today?", "☕ Kto wpada dzisiaj na kawę?")
             )
-            simulateFriendReply()
         }
         binding.chipSticker3.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -157,7 +154,6 @@ class ChatFragment : Fragment() {
                 sender = "Ty",
                 text = AppLocale.t("🤗 Обіймаю! Як проходить день?", "🤗 Sending hugs! How's your day?", "🤗 Ściskam! Jak mija dzień?")
             )
-            simulateFriendReply()
         }
         binding.chipSticker4.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -165,7 +161,6 @@ class ChatFragment : Fragment() {
                 sender = "Ty",
                 text = AppLocale.t("🍕 Збираємося ввечері на піцу!", "🍕 Pizza night tonight!", "🍕 Wpadamy wieczorem na pizzę!")
             )
-            simulateFriendReply()
         }
 
         binding.btnAttachPhoto.setOnClickListener {
@@ -179,7 +174,6 @@ class ChatFragment : Fragment() {
                 it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 viewModel.sendChatMessage(sender = "Ty", text = text)
                 binding.etChatMessage.setText("")
-                simulateFriendReply()
             }
         }
 
@@ -299,7 +293,7 @@ class ChatFragment : Fragment() {
                     viewModel.addCapsule(
                         title = title,
                         message = message,
-                        author = AppLocale.t("Ліза", "Liza", "Liza"),
+                        author = viewModel.profile.value?.membersCsv?.split(",")?.firstOrNull()?.trim()?.takeIf { it.isNotEmpty() } ?: AppLocale.t("Я", "Me", "Ja"),
                         daysUntilUnlock = days
                     )
                     Toast.makeText(
@@ -349,27 +343,6 @@ class ChatFragment : Fragment() {
             "✉️ Utwórz kapsułę czasu (+30 XP)"
         )
         updateSubtabButtonsUi()
-    }
-
-    private fun simulateFriendReply() {
-        binding.tvChatOnlineStatus.text = AppLocale.t(
-            "✍️ Кацпер друкує...",
-            "✍️ Kacper is typing...",
-            "✍️ Kacper pisze..."
-        )
-        binding.tvChatOnlineStatus.setTextColor(AppTheme.theme.primaryColor)
-        handler.postDelayed({
-            if (_binding != null) {
-                val reply = BestiesLogicHelper.getAutoFriendChatReplies().random()
-                viewModel.sendChatMessage(sender = "Кацпер", text = reply)
-                binding.tvChatOnlineStatus.text = AppLocale.t(
-                    "● Друзі онлайн • Повідомлення, фото і капсули",
-                    "● Squad online • Messages, photos & capsules",
-                    "● Ekipa online • Wiadomości, zdjęcia i kapsuły"
-                )
-                binding.tvChatOnlineStatus.setTextColor("#10B981".toColorInt())
-            }
-        }, 1400L)
     }
 
     override fun onDestroyView() {

@@ -204,7 +204,7 @@ class MainActivity : AppCompatActivity() {
                     viewModel.addCapsule(
                         title = title,
                         message = message,
-                        author = AppLocale.t("Ліза", "Liza", "Liza"),
+                        author = viewModel.profile.value?.membersCsv?.split(",")?.firstOrNull()?.trim()?.takeIf { it.isNotEmpty() } ?: AppLocale.t("Я", "Me", "Ja"),
                         daysUntilUnlock = days
                     )
                     Toast.makeText(

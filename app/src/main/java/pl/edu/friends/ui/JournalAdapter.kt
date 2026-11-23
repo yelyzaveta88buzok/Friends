@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import pl.edu.friends.data.JournalEntryEntity
 import pl.edu.friends.databinding.ItemJournalEntryBinding
+import pl.edu.friends.util.AppLocale
 import pl.edu.friends.util.BestiesLogicHelper
 
 class JournalAdapter(
@@ -45,7 +46,7 @@ class JournalAdapter(
 
             binding.tvMyAnswerAndMood.text = entry.myAnswer
             binding.tvFriendAnswerAndMood.text =
-                "💬 Kacper ($friendEmoji ${entry.friendMoodScore}/5): ${entry.friendAnswer}"
+                "💬 ${AppLocale.t("Друзі", "Friends", "Przyjaciele")} ($friendEmoji ${entry.friendMoodScore}/5): ${entry.friendAnswer}"
             binding.tvSharedNote.text = "📌 ${entry.sharedNote}"
 
             binding.btnDeleteJournal.setOnClickListener {

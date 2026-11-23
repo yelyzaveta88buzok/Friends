@@ -7,13 +7,13 @@ import androidx.room.PrimaryKey
 data class FriendshipProfileEntity(
     @PrimaryKey
     val id: Int = 1,
-    val friendName: String = "Кацпер",
+    val friendName: String = "",
     val startDateMillis: Long,
-    val xpPoints: Int = 220,
-    val streakDays: Int = 14,
-    val myMood: String = "🤩 Повна енергії!",
-    val friendMood: String = "☕ Готовий на каву",
+    val xpPoints: Int = 0,
+    val streakDays: Int = 0,
+    val myMood: String = "",
+    val friendMood: String = "",
     val roomCode: String = "FRND-7492",
-    val membersCsv: String = "Ліза,Кацпер,Аня",
-    val checkedInMembersCsv: String = "Ліза,Кацпер,Аня"
+    val membersCsv: String = "",
+    val checkedInMembersCsv: String = ""
 )

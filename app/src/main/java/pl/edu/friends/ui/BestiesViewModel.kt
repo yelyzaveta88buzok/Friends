@@ -27,6 +27,9 @@ class BestiesViewModel(application: Application) : AndroidViewModel(application)
         allMessages = repository.allMessages
         neverGameAnswers = repository.neverGameAnswers
         allJournalEntries = repository.allJournalEntries
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.ensureProfileExists()
+        }
     }
 
     fun addQuickActionXp() {

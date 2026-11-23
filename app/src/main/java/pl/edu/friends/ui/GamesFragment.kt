@@ -36,7 +36,7 @@ class GamesFragment : Fragment() {
     private var currentIndex = 0
     private var currentFilter = "ALL"
     private var cachedNeverAnswers: List<QuizAnswerEntity> = emptyList()
-    private var squadMembers: List<String> = listOf("Ліза", "Кацпер", "Аня")
+    private var squadMembers: List<String> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -110,11 +110,9 @@ class GamesFragment : Fragment() {
                 ?.filter { it.isNotEmpty() }
                 ?.take(BestiesRepository.MAX_FRIENDS_PER_CODE)
                 .orEmpty()
-            if (parsed.isNotEmpty()) {
-                squadMembers = parsed
-                if (binding.layoutGamePlay.visibility == View.VISIBLE && currentGameType == "WHO") {
-                    renderWhoFriendButtons()
-                }
+            squadMembers = parsed
+            if (binding.layoutGamePlay.visibility == View.VISIBLE && currentGameType == "WHO") {
+                renderWhoFriendButtons()
             }
         }
 
@@ -261,6 +259,27 @@ class GamesFragment : Fragment() {
         binding.layoutWhoFriendsOptions.removeAllViews()
         val ctx = requireContext()
         val theme = AppTheme.theme
+        if (squadMembers.isEmpty()) {
+            val infoView = TextView(ctx).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                background = AppTheme.pill(ctx, theme.softTintHex, 14f, 1f, theme.cardStrokeHex)
+                gravity = Gravity.CENTER
+                setPadding(dp(12), dp(12), dp(12), dp(12))
+                text = "👥 " + AppLocale.t(
+                    "Додай друзів на Головній, щоб голосувати!",
+                    "Add friends on Home tab to vote!",
+                    "Dodaj przyjaciół na ekranie Głównym, aby głosować!"
+                )
+                textSize = 13f
+                setTypeface(typeface, Typeface.BOLD)
+                setTextColor(theme.primaryDarkColor)
+            }
+            binding.layoutWhoFriendsOptions.addView(infoView)
+            return
+        }
         val rows = squadMembers.chunked(2)
 
         rows.forEachIndexed { rowIdx, rowMembers ->

@@ -46,7 +46,7 @@ class HomeFragment : Fragment() {
     private val viewModel: BestiesViewModel by activityViewModels()
 
     private val timerHandler = Handler(Looper.getMainLooper())
-    private var friendshipStartMillis: Long = System.currentTimeMillis() - (428L * 24L * 3600_000L)
+    private var friendshipStartMillis: Long = System.currentTimeMillis()
     private var latestProfile: FriendshipProfileEntity? = null
     private var currentIdeaCategory: String = "ALL"
     private var activeSwitchedTab: Int = 0
@@ -186,7 +186,7 @@ class HomeFragment : Fragment() {
                 ?.map { it.trim() }
                 ?.filter { it.isNotEmpty() }
                 ?.take(BestiesRepository.MAX_FRIENDS_PER_CODE)
-                ?: listOf("Ліза", "Кацпер", "Аня")
+                .orEmpty()
             val code = profile?.roomCode ?: "FRND-7492"
 
             sheetBinding.tvSettingsTitle.text = AppLocale.t("⚙️ Налаштування простору", "⚙️ Space Settings", "⚙️ Ustawienia przestrzeni")
@@ -216,7 +216,11 @@ class HomeFragment : Fragment() {
                 "🔑 Kod paczki (maks. 5 przyjaciół)"
             )
             sheetBinding.tvSettingsCodeValue.text = "$code • ${members.size}/5"
-            sheetBinding.tvSettingsMembersList.text = "👥 " + members.joinToString(" • ")
+            sheetBinding.tvSettingsMembersList.text = if (members.isEmpty()) {
+                AppLocale.t("👥 Поки немає учасників — натисни «+ Друг»", "👥 No members yet — tap + Friend", "👥 Brak osób — kliknij + Dodaj")
+            } else {
+                "👥 " + members.joinToString(" • ")
+            }
             sheetBinding.btnSettingsManageFriends.text = AppLocale.t("➕ Друг (до 5)", "➕ Friend (max 5)", "➕ Dodaj (do 5)")
             sheetBinding.btnSettingsManageFriends.background = AppTheme.pill(ctx, theme.softTintHex, 12f)
             sheetBinding.btnSettingsManageFriends.setTextColor(theme.primaryColor)
@@ -312,13 +316,13 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun renderWeekStreakDots(members: List<String>, checkedIn: Set<String>) {
+    private fun renderWeekStreakDots(streakDays: Int) {
         binding.layoutStreakWeekDots.removeAllViews()
         val ctx = requireContext()
         val theme = AppTheme.theme
-        val allToday = members.isNotEmpty() && checkedIn.size >= members.size
+        val filled = streakDays.coerceIn(0, 7)
         for (i in 0 until 7) {
-            val active = (i < 6) || allToday
+            val active = i < filled
             val dotBg = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor((if (active) theme.primaryColor else "#E5E7EB".toColorInt()))
@@ -672,25 +676,27 @@ class HomeFragment : Fragment() {
             val qForDay = questions[day % questions.size]
             sheetBinding.tvSelectedDayQuestion.text = qForDay
 
-            val sampleAnswers = listOf(
-                AppLocale.t("Вечірній кіномарафон і піца з друзями! 🍕", "Movie marathon and pizza night with friends! 🍕", "Wieczorny maraton filmowy i pizza! 🍕"),
-                AppLocale.t("Спонтанна поїздка та розмови до ночі 🌆", "Spontaneous trip and late-night talks 🌆", "Spontaniczny wypad i rozmowy do nocy 🌆"),
-                AppLocale.t("Спільна кава перед парами і багато сміху ☕", "Morning coffee before class and lots of laughs ☕", "Wspólna kawa przed zajęciami i dużo śmiechu ☕")
-            )
-
-            val lines = members.mapIndexed { idx, member ->
-                val memberDone = when (status) {
-                    "both" -> true
-                    "one" -> if (isToday) checkedIn.any { it.equals(member, ignoreCase = true) } else (idx == 0)
-                    else -> false
+            if (members.isEmpty()) {
+                sheetBinding.tvSelectedDayWhoCheckedIn.text = AppLocale.t(
+                    "Додай друзів, щоб відстежувати відповіді",
+                    "Add friends to track answers",
+                    "Dodaj przyjaciół, aby śledzić odpowiedzi"
+                )
+            } else {
+                val lines = members.map { member ->
+                    val memberDone = when (status) {
+                        "both" -> true
+                        "one" -> isToday && checkedIn.any { it.equals(member, ignoreCase = true) }
+                        else -> false
+                    }
+                    if (memberDone) {
+                        "✅ $member: " + AppLocale.t("Відповів(-ла) сьогодні", "Answered today", "Odpowiedział(a) dzisiaj")
+                    } else {
+                        "⏳ $member: " + AppLocale.t("Ще не відповів(-ла)", "Hasn't answered yet", "Jeszcze nie odpowiedział(a)")
+                    }
                 }
-                if (memberDone) {
-                    "✅ $member: «${sampleAnswers[idx % sampleAnswers.size]}»"
-                } else {
-                    "⏳ $member: " + AppLocale.t("Ще не відповів(-ла)", "Hasn't answered yet", "Jeszcze nie odpowiedział(a)")
-                }
+                sheetBinding.tvSelectedDayWhoCheckedIn.text = lines.joinToString("\n")
             }
-            sheetBinding.tvSelectedDayWhoCheckedIn.text = lines.joinToString("\n")
         }
 
         fun renderMonthGrid() {
@@ -730,15 +736,16 @@ class HomeFragment : Fragment() {
 
                     val isCurrentMonth = (calYear == todayYear && calMonth == todayMonth)
                     val isToday = isCurrentMonth && (dayNum == todayDay)
-                    val allCheckedToday = checkedIn.size >= members.size
+                    val allCheckedToday = members.isNotEmpty() && checkedIn.size >= members.size
 
                     val status = when {
                         isFuture -> "future"
-                        isToday -> if (allCheckedToday) "both" else "one"
-                        isCurrentMonth && (todayDay - dayNum) in 1..profile.streakDays -> "both"
-                        isCurrentMonth && (todayDay - dayNum) == profile.streakDays + 1 -> "one"
-                        !isCurrentMonth && (dayNum % 3 != 0) -> "both"
-                        !isCurrentMonth && (dayNum % 3 == 0) -> "one"
+                        isToday -> when {
+                            allCheckedToday -> "both"
+                            checkedIn.isNotEmpty() || profile.streakDays > 0 -> "one"
+                            else -> "none"
+                        }
+                        isCurrentMonth && profile.streakDays > 0 && (todayDay - dayNum) in 1..profile.streakDays -> "both"
                         else -> "none"
                     }
 
@@ -787,9 +794,15 @@ class HomeFragment : Fragment() {
             }
 
             val selStatus = if (calYear == todayYear && calMonth == todayMonth && selectedDay == todayDay) {
-                if (checkedIn.size >= members.size) "both" else "one"
-            } else {
+                when {
+                    members.isNotEmpty() && checkedIn.size >= members.size -> "both"
+                    checkedIn.isNotEmpty() || profile.streakDays > 0 -> "one"
+                    else -> "none"
+                }
+            } else if (calYear == todayYear && calMonth == todayMonth && profile.streakDays > 0 && (todayDay - selectedDay) in 1..profile.streakDays) {
                 "both"
+            } else {
+                "none"
             }
             updateSelectedDayDetail(selectedDay.coerceIn(1, daysInMonth), selStatus)
         }
@@ -864,7 +877,11 @@ class HomeFragment : Fragment() {
             addView(input)
         }
 
-        val currentListText = members.mapIndexed { i, name -> "${i + 1}. $name" }.joinToString("\n")
+        val currentListText = if (members.isEmpty()) {
+            AppLocale.t("(поки порожньо — впиши ім'я нижче)", "(empty yet — type a name below)", "(na razie pusto — wpisz imię poniżej)")
+        } else {
+            members.mapIndexed { i, name -> "${i + 1}. $name" }.joinToString("\n")
+        }
         val msg = AppLocale.t(
             "Код вашої компанії: ${profile.roomCode}\nМаксимум одночасно може приєднатися 5 друзів.\n\nЗараз у компанії (${members.size}/5):\n$currentListText",
             "Your squad code: ${profile.roomCode}\nMaximum 5 friends can join one code.\n\nCurrently in squad (${members.size}/5):\n$currentListText",
@@ -897,7 +914,7 @@ class HomeFragment : Fragment() {
                 }
             }
             .setNeutralButton(AppLocale.t("Видалити останнього", "Remove last", "Usuń ostatniego")) { _, _ ->
-                if (members.size > 1) {
+                if (members.isNotEmpty()) {
                     viewModel.removeFriendFromRoom(members.last())
                 }
             }
@@ -1018,7 +1035,7 @@ class HomeFragment : Fragment() {
             val members = profile.membersCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(BestiesRepository.MAX_FRIENDS_PER_CODE)
             val checkedIn = profile.checkedInMembersCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
             renderBentoAvatars(members, checkedIn)
-            renderWeekStreakDots(members, checkedIn)
+            renderWeekStreakDots(profile.streakDays)
         }
     }
 
@@ -1026,7 +1043,7 @@ class HomeFragment : Fragment() {
         friendshipStartMillis = profile.startDateMillis
         val levelTitle = BestiesLogicHelper.getLocalizedLevelTitle(profile.xpPoints)
         binding.tvFriendshipLevel.text = "${levelTitle.substringBefore(":")} • ${profile.xpPoints} XP"
-        binding.progressXp.progress = profile.xpPoints.coerceIn(20, 500)
+        binding.progressXp.progress = profile.xpPoints.coerceIn(0, 500)
 
         val dUnit = AppLocale.t("дн.", "d", "dni")
         binding.tvStreakDays.text = "🔥 ${profile.streakDays} $dUnit"
@@ -1041,11 +1058,19 @@ class HomeFragment : Fragment() {
             "${members.size}/5 in squad",
             "${members.size}/5 w ekipie"
         )
-        binding.tvBentoAvatarsHint.text = members.joinToString(" • ") + " ›"
-        binding.tvBentoMoodSummary.text = "${profile.myMood} • ${profile.friendMood}"
+        binding.tvBentoAvatarsHint.text = if (members.isEmpty()) {
+            AppLocale.t("+ Додати друзів ›", "+ Add friends ›", "+ Dodaj przyjaciół ›")
+        } else {
+            members.joinToString(" • ") + " ›"
+        }
+        binding.tvBentoMoodSummary.text = when {
+            profile.myMood.isBlank() && profile.friendMood.isBlank() -> AppLocale.t("Познач настрій сьогодні", "Log today's mood", "Oznacz dzisiejszy nastrój")
+            profile.friendMood.isBlank() -> profile.myMood
+            else -> "${profile.myMood} • ${profile.friendMood}"
+        }
 
         renderBentoAvatars(members, checkedIn)
-        renderWeekStreakDots(members, checkedIn)
+        renderWeekStreakDots(profile.streakDays)
         renderRitualAvatarsRow(members, checkedIn)
 
         timerHandler.removeCallbacks(timerRunnable)
@@ -1054,30 +1079,17 @@ class HomeFragment : Fragment() {
 
     private fun bindMoodMiniChart(entries: List<JournalEntryEntity>) {
         val recent = entries.distinctBy { it.dateLabel }.take(7).reversed()
-        val fallback = listOf(
-            DayWarmthPoint("Пн", 4f, 4f),
-            DayWarmthPoint("Вт", 5f, 4f),
-            DayWarmthPoint("Ср", 3.5f, 4f),
-            DayWarmthPoint("Чт", 4.5f, 5f),
-            DayWarmthPoint("Пт", 5f, 4f),
-            DayWarmthPoint("Сб", 4.5f, 5f),
-            DayWarmthPoint("Нд", 5f, 5f)
-        )
-        val wavePoints = if (recent.isEmpty()) {
-            fallback
-        } else {
-            val missing = (7 - recent.size).coerceAtLeast(0)
-            val padded = fallback.take(missing).toMutableList()
-            recent.forEach { item ->
-                padded.add(
-                    DayWarmthPoint(
-                        dayLabel = item.dateLabel.take(5),
-                        myScore = item.myMoodScore.coerceIn(1, 5).toFloat(),
-                        friendScore = item.friendMoodScore.coerceIn(1, 5).toFloat()
-                    )
-                )
-            }
-            padded
+        if (recent.isEmpty()) {
+            binding.miniMoodSparkline.setData(emptyList(), animate = false)
+            binding.tvBentoMoodScore.text = "—"
+            return
+        }
+        val wavePoints = recent.map { item ->
+            DayWarmthPoint(
+                dayLabel = item.dateLabel.take(5),
+                myScore = item.myMoodScore.coerceIn(1, 5).toFloat(),
+                friendScore = item.friendMoodScore.coerceIn(1, 5).toFloat()
+            )
         }
         binding.miniMoodSparkline.setData(wavePoints, animate = false)
         val avg = wavePoints.map { (it.myScore + it.friendScore) / 2.0 }.average()

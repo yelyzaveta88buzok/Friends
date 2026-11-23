@@ -16,6 +16,17 @@ class BestiesRepository(private val dao: BestiesDao) {
 
     suspend fun getProfileSync(): FriendshipProfileEntity? = dao.getProfileSync()
 
+    suspend fun ensureProfileExists() {
+        if (dao.getProfileSync() == null) {
+            dao.saveProfile(
+                FriendshipProfileEntity(
+                    id = 1,
+                    startDateMillis = System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
     suspend fun saveProfile(profile: FriendshipProfileEntity) {
         dao.saveProfile(profile)
     }
@@ -66,20 +77,18 @@ class BestiesRepository(private val dao: BestiesDao) {
         val current = dao.getProfileSync() ?: return
         val members = current.membersCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() && !it.equals(friendName, ignoreCase = true) }
         val checkedIn = current.checkedInMembersCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() && !it.equals(friendName, ignoreCase = true) }
-        if (members.isNotEmpty()) {
-            dao.saveProfile(
-                current.copy(
-                    membersCsv = members.joinToString(","),
-                    checkedInMembersCsv = checkedIn.joinToString(",")
-                )
+        dao.saveProfile(
+            current.copy(
+                membersCsv = members.joinToString(","),
+                checkedInMembersCsv = checkedIn.joinToString(",")
             )
-        }
+        )
     }
 
     suspend fun checkInAllFriendsToday() {
         val current = dao.getProfileSync() ?: return
         val members = current.membersCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-        val alreadyAll = current.checkedInMembersCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.size >= members.size
+        val alreadyAll = members.isNotEmpty() && current.checkedInMembersCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.size >= members.size
         val nextStreak = if (alreadyAll) current.streakDays else current.streakDays + 1
         dao.saveProfile(
             current.copy(

@@ -37,7 +37,7 @@ class JournalFragment : Fragment() {
     private val viewModel: BestiesViewModel by activityViewModels()
     private var cachedEntries: List<JournalEntryEntity> = emptyList()
     private var latestProfile: FriendshipProfileEntity? = null
-    private var selectedMyMoodScore: Int = 5
+    private var selectedMyMoodScore: Int = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -162,7 +162,7 @@ class JournalFragment : Fragment() {
         renderDailyMoodLimitUi()
 
         val dateStr = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())
-        val friendScore = listOf(4, 5, 5, 4).random()
+        val friendScore = score
         val moodLabels = mapOf(
             1 to AppLocale.t("😢 Втома", "😢 Tired", "😢 Zmęczenie"),
             2 to AppLocale.t("😔 Сумно", "😔 Down", "😔 Smutek"),
@@ -172,7 +172,7 @@ class JournalFragment : Fragment() {
         )
         viewModel.updateMoods(
             myMood = moodLabels[score] ?: AppLocale.t("🤩 Супер!", "🤩 Awesome!", "🤩 Super!"),
-            friendMood = AppLocale.t("☕ Затишно", "☕ Cozy", "☕ Przytulnie")
+            friendMood = ""
         )
         viewModel.recordDailyMood(
             dateLabel = dateStr,
@@ -275,42 +275,31 @@ class JournalFragment : Fragment() {
     }
 
     private fun updateWarmthStatsAndWave(entries: List<JournalEntryEntity>) {
-        val dayLabelsDefault = listOf(
-            AppLocale.t("Пн", "Mon", "Pn"),
-            AppLocale.t("Вт", "Tue", "Wt"),
-            AppLocale.t("Ср", "Wed", "Śr"),
-            AppLocale.t("Чт", "Thu", "Cz"),
-            AppLocale.t("Пт", "Fri", "Pt"),
-            AppLocale.t("Сб", "Sat", "Sb"),
-            AppLocale.t("Нд", "Sun", "Nd")
-        )
-        val fallbackPoints = listOf(
-            DayWarmthPoint(dayLabelsDefault[0], 4f, 4f),
-            DayWarmthPoint(dayLabelsDefault[1], 5f, 4f),
-            DayWarmthPoint(dayLabelsDefault[2], 3f, 4f),
-            DayWarmthPoint(dayLabelsDefault[3], 4f, 5f),
-            DayWarmthPoint(dayLabelsDefault[4], 5f, 4f),
-            DayWarmthPoint(dayLabelsDefault[5], 4f, 5f),
-            DayWarmthPoint(dayLabelsDefault[6], selectedMyMoodScore.toFloat(), 5f)
-        )
-
         val recent = entries.distinctBy { it.dateLabel }.take(7).reversed()
-        val wavePoints = if (recent.isEmpty()) {
-            fallbackPoints
-        } else {
-            val missing = (7 - recent.size).coerceAtLeast(0)
-            val padded = fallbackPoints.take(missing).toMutableList()
-            recent.forEachIndexed { idx, item ->
-                val shortLabel = item.dateLabel.take(5).ifEmpty { dayLabelsDefault[(missing + idx) % 7] }
-                padded.add(
-                    DayWarmthPoint(
-                        dayLabel = shortLabel,
-                        myScore = item.myMoodScore.coerceIn(1, 5).toFloat(),
-                        friendScore = item.friendMoodScore.coerceIn(1, 5).toFloat()
-                    )
-                )
-            }
-            padded
+        val avgTitle = AppLocale.t("Середнє", "Average", "Średnia")
+        val warmTitle = AppLocale.t("Теплих днів", "Warm days", "Ciepłych dni")
+        val syncTitle = AppLocale.t("Синхрон", "Vibe sync", "Zgodność")
+
+        if (recent.isEmpty()) {
+            binding.warmthWaveChart.setData(emptyList(), animate = false)
+            binding.tvWarmthTempBadge.text = AppLocale.t("⭐ Середнє: —", "⭐ Avg: —", "⭐ Średnia: —")
+            binding.tvStatAvg.text = "⭐ —\n$avgTitle"
+            binding.tvStatWarmDays.text = "☀️ 0\n$warmTitle"
+            binding.tvStatSync.text = "🤝 —\n$syncTitle"
+            binding.tvSelectedDayTooltip.text = AppLocale.t(
+                "📅 Обери настрій нижче, щоб почати графік",
+                "📅 Pick a mood below to start chart",
+                "📅 Wybierz nastrój poniżej, aby zacząć wykres"
+            )
+            return
+        }
+
+        val wavePoints = recent.map { item ->
+            DayWarmthPoint(
+                dayLabel = item.dateLabel.take(5).ifEmpty { "—" },
+                myScore = item.myMoodScore.coerceIn(1, 5).toFloat(),
+                friendScore = item.friendMoodScore.coerceIn(1, 5).toFloat()
+            )
         }
 
         binding.warmthWaveChart.setData(wavePoints, animate = true)
@@ -327,12 +316,8 @@ class JournalFragment : Fragment() {
             "⭐ Średnia: $avgFmt / 5"
         )
 
-        val avgTitle = AppLocale.t("Середнє", "Average", "Średnia")
-        val warmTitle = AppLocale.t("Теплих днів", "Warm days", "Ciepłych dni")
-        val syncTitle = AppLocale.t("Синхрон", "Vibe sync", "Zgodność")
-
         binding.tvStatAvg.text = "⭐ $avgFmt / 5\n$avgTitle"
-        binding.tvStatWarmDays.text = "☀️ $warmDays ${AppLocale.t("із", "of", "z")} 7\n$warmTitle"
+        binding.tvStatWarmDays.text = "☀️ $warmDays ${AppLocale.t("із", "of", "z")} ${wavePoints.size}\n$warmTitle"
         binding.tvStatSync.text = "🤝 $syncPct%\n$syncTitle"
     }
 
@@ -345,13 +330,34 @@ class JournalFragment : Fragment() {
             ?.map { it.trim() }
             ?.filter { it.isNotEmpty() }
             ?.take(BestiesRepository.MAX_FRIENDS_PER_CODE)
-            ?: listOf("Ліза", "Кацпер", "Аня")
+            .orEmpty()
 
-        val friendScores = listOf(selectedMyMoodScore, 5, 4, 5, 4)
+        if (members.isEmpty()) {
+            val chipBg = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(99).toFloat()
+                setColor(theme.softTintColor)
+                setStroke(dp(1), theme.secondaryColor)
+            }
+            val chip = TextView(ctx).apply {
+                background = chipBg
+                setPadding(dp(12), dp(6), dp(12), dp(6))
+                text = "👥 " + AppLocale.t("Додай друзів на Головній", "Add friends on Home", "Dodaj przyjaciół na Głównej")
+                textSize = 12f
+                setTypeface(typeface, Typeface.BOLD)
+                setTextColor(theme.primaryDarkColor)
+            }
+            binding.layoutFriendsWarmthChips.addView(chip)
+            return
+        }
 
         members.forEachIndexed { idx, name ->
-            val score = friendScores[idx % friendScores.size].coerceIn(1, 5)
             val avatarEmoji = RoomPrefs.getAvatar(ctx, name, idx)
+            val scoreSuffix = if (idx == 0 && selectedMyMoodScore > 0) {
+                " • ${emojiFor(selectedMyMoodScore)} $selectedMyMoodScore/5"
+            } else {
+                ""
+            }
             val chipBg = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(99).toFloat()
@@ -361,7 +367,7 @@ class JournalFragment : Fragment() {
             val chip = TextView(ctx).apply {
                 background = chipBg
                 setPadding(dp(12), dp(6), dp(12), dp(6))
-                text = "$avatarEmoji $name • ${emojiFor(score)} $score/5"
+                text = "$avatarEmoji $name$scoreSuffix"
                 textSize = 12f
                 setTypeface(typeface, Typeface.BOLD)
                 setTextColor(theme.primaryDarkColor)
