@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Friends</string>
+
+    <string name="nav_home">Główna</string>
+    <string name="nav_chat">Czat</string>
+    <string name="nav_games">Gry</string>
+    <string name="nav_journal">Nastrój</string>
+
+    <string name="timer_header">Jesteście przyjaciółmi już od:</string>
+    <string name="vibe_section_title">Wasz dzisiejszy nastrój (Vibe):</string>
+    <string name="btn_change_mood">Zmień swój nastrój</string>
+    <string name="quick_actions_title">Szybka interakcja (+10 pkt XP):</string>
+    <string name="btn_high_five">✋ Przybij piątkę</string>
+    <string name="btn_coffee">☕ Skoczmy na kawę</string>
+    <string name="btn_meme">😂 Wyślij mema</string>
+    <string name="hangout_idea_title">🎲 Generator pomysłów na spotkanie:</string>
+    <string name="btn_draw_idea">Wylosuj pomysł na wspólny wypad</string>
+    <string name="capsules_section_title">⏳ Kapsuły Czasu (Wiadomości w przyszłość)</string>
+    <string name="btn_new_capsule">+ Utwórz nową Kapsułę Czasu</string>
+    <string name="empty_capsules">Brak kapsuł czasu. Zapisz tajną wiadomość dla przyjaciół, która odblokuje się w wybranym dniu!</string>
+
+    <string name="chat_partner_name">Чат Друзів 🤝</string>
+    <string name="chat_status_online">🟢 Online • Aktywny teraz</string>
+    <string name="hint_chat_message">Napisz wiadomość do przyjaciół...</string>
+    <string name="btn_send">Wyślij</string>
+    <string name="btn_photo">📷</string>
+
+    <string name="games_header_title">🎮 Gry i Quizy dla Przyjaciół (+20 pkt XP)</string>
+    <string name="game_tab_never">🔥 Nigdy nie...</string>
+    <string name="game_tab_who">😂 Kto z nas?</string>
+    <string name="game_tab_this_that">🎲 To czy tamto</string>
+    <string name="stats_bylo_title">📊 Wspólna statystyka gry „Nigdy nie...”</string>
+
+    <string name="journal_question_header">❓ Pytanie dnia dla przyjaciół:</string>
+    <string name="btn_add_journal_entry">+ Dodaj dzisiejszą odpowiedź i nastrój (1–5)</string>
+    <string name="mood_chart_title">📈 Wykres nastrojów przyjaciół (ostatnie 7 dni)</string>
+    <string name="journal_history_title">📖 Historia wpisów w Dzienniku Przyjaźni</string>
+
+    <string name="btn_save">Zapisz</string>
+    <string name="btn_cancel">Anuluj</string>
+    <string name="btn_delete">Usuń</string>
+    <string name="delete">Usuń</string>
+
+    <string name="notif_channel_name">Powiadomienia Friends (Czat, Gry i Kapsuły Czasu)</string>
+    <string name="notif_channel_desc">Powiadomienia o nowych wiadomościach, odpowiedziach w quizie i odblokowanych kapsułach czasu</string>
+    <string name="notification_channel_name">Powiadomienia Friends (Czat, Gry i Kapsuły Czasu)</string>
+    <string name="notification_channel_desc">Powiadomienia o nowych wiadomościach, odpowiedziach w quizie i odblokowanych kapsułach czasu</string>
+</resources>

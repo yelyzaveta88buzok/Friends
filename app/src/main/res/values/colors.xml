@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#4F46E5</color>
+    <color name="primary_dark">#312E81</color>
+    <color name="primary_light">#EEF2FF</color>
+    <color name="primary_coral">#4F46E5</color>
+    <color name="accent">#6366F1</color>
+
+    <color name="background_light">#F3F4F6</color>
+    <color name="surface_white">#FFFFFF</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_light">#F8FAFC</color>
+    <color name="surface_muted">#F1F5F9</color>
+
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#4B5563</color>
+    <color name="text_muted">#6B7280</color>
+
+    <color name="border_soft">#E5E7EB</color>
+    <color name="border_muted">#D1D5DB</color>
+    <color name="divider_color">#E5E7EB</color>
+
+    <color name="bg_tint_red">#EEF2FF</color>
+    <color name="bg_tint_amber">#FEF3C7</color>
+    <color name="border_amber">#F59E0B</color>
+    <color name="text_amber">#92400E</color>
+    <color name="bg_tint_green">#ECFDF5</color>
+    <color name="border_green">#6EE7B7</color>
+    <color name="bg_tint_purple">#F3E8FF</color>
+    <color name="bg_partner_bubble">#F3F4F6</color>
+
+    <color name="scrapbook_bg">#F3F4F6</color>
+    <color name="scrapbook_header_bg">#FFFFFF</color>
+    <color name="scrapbook_brown">#4B5563</color>
+    <color name="scrapbook_brown_dark">#111827</color>
+    <color name="sticky_yellow">#FFFFFF</color>
+    <color name="sticky_pink">#FFFFFF</color>
+    <color name="sticky_mint">#F8FAFC</color>
+    <color name="envelope_kraft">#F8FAFC</color>
+    <color name="wax_seal_red">#E11D48</color>
+
+    <color name="accent_purple">#4F46E5</color>
+    <color name="accent_teal">#0D9488</color>
+    <color name="accent_green">#10B981</color>
+    <color name="accent_amber">#D97706</color>
+    <color name="quick_action_text">#111827</color>
+
+    <color name="status_online">#10B981</color>
+    <color name="capsule_locked">#6B7280</color>
+    <color name="capsule_unlocked">#10B981</color>
+    <color name="bylo_fire">#E11D48</color>
+    <color name="chart_friend_1">#4F46E5</color>
+    <color name="chart_friend_2">#94A3B8</color>
+</resources>
